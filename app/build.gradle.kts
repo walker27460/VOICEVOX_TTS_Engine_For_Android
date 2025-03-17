@@ -55,7 +55,7 @@ fun ZipInputStream.forEach(fn: (ZipEntry)->Unit){
     }
 }
 
-task("downloadVoicevox") {
+tasks.register("downloadVoicevox") {
     val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
     val voicevoxZip = uri("https://github.com/VOICEVOX/voicevox_core/releases/download/${project.libs.voicevox.core.get().version}/java_packages.zip")
     val req = HttpRequest.newBuilder().GET().uri(voicevoxZip).build()
