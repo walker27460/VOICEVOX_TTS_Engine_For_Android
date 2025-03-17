@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.pull_request.head.sha }}
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
