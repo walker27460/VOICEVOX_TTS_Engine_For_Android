@@ -1,9 +1,10 @@
 package dev.ztssst.voicevox_tts
 
 import android.util.Log
-import jp.hiroshiba.voicevoxcore.OpenJtalk
-import jp.hiroshiba.voicevoxcore.Synthesizer
-import jp.hiroshiba.voicevoxcore.VoiceModel
+import jp.hiroshiba.voicevoxcore.blocking.OpenJtalk
+import jp.hiroshiba.voicevoxcore.blocking.Synthesizer
+import jp.hiroshiba.voicevoxcore.blocking.Onnxruntime
+import jp.hiroshiba.voicevoxcore.blocking.VoiceModelFile
 
 class VoicevoxTTSEngine(voiceModelPath: String, openJtalkDictPath: String){
     private val synthesizer: Synthesizer
@@ -11,9 +12,10 @@ class VoicevoxTTSEngine(voiceModelPath: String, openJtalkDictPath: String){
     private val TAG = "VoicevoxTTSService"
 
     init {
-        val model = VoiceModel(voiceModelPath)
+        val model = VoiceModelFile(voiceModelPath)
         val jtalk = OpenJtalk(openJtalkDictPath)
-        val synthesizer = Synthesizer.builder(jtalk).build()
+        val onnxruntime = Onnxruntime.loadOnce().perform()
+        val synthesizer = Synthesizer.builder(onnxruntime, jtalk).build()
         synthesizer.loadVoiceModel(model)
         this.synthesizer = synthesizer
         Log.d(TAG, "VoicevoxTTSService Initialized")
@@ -22,7 +24,7 @@ class VoicevoxTTSEngine(voiceModelPath: String, openJtalkDictPath: String){
     fun synthesis(text: String, speakerId: Int = 14): ByteArray{ // 冥鳴ひまりでやるので、defaultのstyleIdは14
         Log.d("${TAG}->Synthesizer", "Synthesis started (isGPUMode = ${synthesizer.isGpuMode})")
         val synthStartTime = System.currentTimeMillis()
-        val data = synthesizer.tts(text, speakerId).execute()
+        val data = synthesizer.tts(text, speakerId).perform()
         Log.d("${TAG}->Synthesizer", "Synthesis finished: data.size = ${data.size}")
         Log.d("${TAG}->Synthesizer", "Synthesis elapsed: ${System.currentTimeMillis() - synthStartTime}ms")
         return data
