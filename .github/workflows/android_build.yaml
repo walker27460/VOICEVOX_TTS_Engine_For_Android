@@ -28,7 +28,7 @@ jobs:
         run: chmod +x ./gradlew
       - name: Setup VOICEVOX
         run: |
-          ./gradlew downloadVoicevox
+          ./gradlew :app:downloadVoicevox
       - name: Build With Gradle
         run: |
           ./gradlew assembleDebug
