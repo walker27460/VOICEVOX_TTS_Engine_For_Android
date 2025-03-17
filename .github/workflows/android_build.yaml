@@ -27,6 +27,9 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Make gradlew executable
         run: chmod +x ./gradlew
+      - name: Setup VOICEVOX
+        run: |
+          ./gradlew :app:downloadVoicevox
       - name: Build With Gradle
         run: |
           ./gradlew assembleDebug

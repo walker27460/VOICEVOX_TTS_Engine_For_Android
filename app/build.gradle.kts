@@ -1,3 +1,12 @@
+
+import java.io.BufferedOutputStream
+import java.io.FileOutputStream
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -38,6 +47,27 @@ android {
         compose = true
     }
 }
+fun ZipInputStream.forEach(fn: (ZipEntry)->Unit){
+    var entry = nextEntry
+    while (entry != null){
+        fn(entry)
+        entry = nextEntry
+    }
+}
+
+tasks.create("downloadVoicevox") {
+    val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+    val voicevoxZip = uri("https://github.com/VOICEVOX/voicevox_core/releases/download/${project.libs.voicevox.core.get().version}/java_packages.zip")
+    val req = HttpRequest.newBuilder().GET().uri(voicevoxZip).build()
+    val res = client.send(req, HttpResponse.BodyHandlers.ofInputStream())
+
+    ZipInputStream(res.body()).use { zis -> zis.forEach {
+        println("Extracting ${it.name}...")
+        val dest = File(project.repositories.mavenLocal().url.path, it.name)
+        if(it.isDirectory) dest.mkdirs() else zis.copyTo(FileOutputStream(dest))
+    }
+    }
+}
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -61,7 +91,7 @@ dependencies {
     implementation(libs.onnxruntime.android)
 
     // voicevox runtime
-    implementation(files("libs/voicevoxcore.aar"))
+    implementation(libs.voicevox.core)
 
     // gson
     implementation(libs.gson)
