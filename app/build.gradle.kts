@@ -1,7 +1,9 @@
 
-import kotlinx.coroutines.*
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
@@ -54,13 +56,15 @@ fun ZipInputStream.forEach(fn: (ZipEntry)->Unit){
 }
 
 task("downloadVoicevox") {
+    val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
     val voicevoxZip = uri("https://github.com/VOICEVOX/voicevox_core/releases/download/${project.libs.voicevox.core.get().version}/java_packages.zip")
-    ZipInputStream(voicevoxZip.toURL().openStream()).use { zis -> zis.forEach {
+    val req = HttpRequest.newBuilder().GET().uri(voicevoxZip).build()
+    val res = client.send(req, HttpResponse.BodyHandlers.ofInputStream())
+
+    ZipInputStream(res.body()).use { zis -> zis.forEach {
+        println("Extracting ${it.name}...")
         val dest = File(project.repositories.mavenLocal().url.path, it.name)
-        it.isDirectory && (dest.exists() || dest.mkdirs()) || run {
-            zis.copyTo(BufferedOutputStream(FileOutputStream(dest)))
-            dest.parentFile?.mkdirs() == true
-        }
+        if(it.isDirectory) dest.mkdirs() else zis.copyTo(FileOutputStream(dest))
     }
     }
 }
